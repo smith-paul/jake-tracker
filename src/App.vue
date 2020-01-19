@@ -68,6 +68,7 @@ body {
   margin: 0;
   height: 100%;
   text-align: center;
+  background: #111;
 }
 section {
   display: flex;

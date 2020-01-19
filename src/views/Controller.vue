@@ -6,7 +6,7 @@
     <!-- <input v-model="customPoop" type="text" />
     <br />
     <button @click="addCustomPoop">custom</button>-->
-    <router-link to="/dashboard">Dashboard</router-link>
+    <router-link to="/data">Data</router-link>
   </section>
 </template>
 
