@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <router-view v-if="authenticated" :poops="formattedPoops" />
+    <router-view v-if="authenticated" :poops="formattedPoops" :workout="formattedWorkout" />
     <Login :login="authenticate" v-else />
   </div>
 </template>
@@ -15,6 +15,7 @@ export default {
     return {
       authenticated: false,
       firebase: new Firebase(),
+      workout: [],
       poops: []
     };
   },
@@ -24,6 +25,17 @@ export default {
         .sort()
         .reverse()
         .map(epoch => new Time(epoch));
+    },
+    formattedWorkout() {
+      return Array.from(this.workout)
+        .sort()
+        .reverse()
+        .map(([epoch, value, type, id]) => ({
+          value,
+          type,
+          id,
+          time: new Time(epoch)
+        }));
     }
   },
   methods: {
@@ -49,6 +61,9 @@ export default {
     initializeData() {
       this.firebase.subscribe("poops", {
         added: (k, v) => this.onAdd("poops", k, v)
+      });
+      this.firebase.subscribe("workout", {
+        added: (k, v) => this.onAdd("workout", k, v)
       });
     },
     onAdd(type, key, value) {

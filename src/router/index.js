@@ -12,7 +12,7 @@ const routes = [
     component: Controller
   },
   {
-    path: "/data",
+    path: "/data/:type/:store",
     name: "data",
     component: Data
   }
