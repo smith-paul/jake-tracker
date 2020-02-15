@@ -1,27 +1,43 @@
 <template>
-  <div class="chart">
-    <div class="markers">
-      <span
-        v-for="m in markers"
-        :key="m.label"
-        :style="{ left: m.left }"
-        class="x"
-      >
-        <span>{{ m.label }}</span>
-      </span>
+  <div class="main">
+    <div class="chart">
+      <div class="markers">
+        <span
+          v-for="m in markers"
+          :key="m.label"
+          :style="{ left: m.left }"
+          class="x"
+        >
+          <span>{{ m.label }}</span>
+        </span>
+      </div>
+      <div class="items">
+        <span
+          v-for="item in sortedByTime"
+          :key="item.epoch"
+          :style="itemStyle(item)"
+          :class="{ focused: active === item.epoch }"
+          @click="activate(item.epoch)"
+          class="item"
+        >
+          {{ icon }}
+          <span>{{ item.time }}</span>
+        </span>
+      </div>
     </div>
-    <div class="items">
-      <span
-        v-for="item in sortedByTime"
-        :key="item.epoch"
-        :style="itemStyle(item)"
-        :class="{ focused: active === item.epoch }"
-        @click="activate(item.epoch)"
-        class="item"
-      >
-        {{ icon }}
-        <span>{{ item.time }}</span>
-      </span>
+    <div class="stats" v-if="stats.first">
+      <ul>
+        <li>
+          {{ stats.first.ago.days }} days of {{ icon }} (est.
+          {{ stats.first.date }})
+        </li>
+        <li>
+          {{ stats.total }} &times; {{ icon }} ({{
+            (stats.total / stats.first.ago.days).toFixed(3)
+          }}
+          per day)
+        </li>
+      </ul>
     </div>
   </div>
 </template>
@@ -34,10 +50,7 @@ interface Marker {
   left: string;
   label: string;
 }
-
-interface Item {
-  time: Time;
-}
+type Item = Time;
 
 export type InstanceValue = number;
 
@@ -55,6 +68,15 @@ export default class DataInstance extends Vue {
       if (a.time < b.time) return -1;
       return 0;
     });
+  }
+
+  get stats() {
+    const len = this.sortedByTime.length;
+    const first = this.sortedByTime[len - 1];
+    return {
+      first,
+      total: len,
+    };
   }
 
   activate(epoch: number) {
@@ -78,6 +100,11 @@ export default class DataInstance extends Vue {
 </script>
 
 <style scoped>
+.main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
 .chart {
   flex: 1;
   position: relative;
@@ -125,5 +152,11 @@ export default class DataInstance extends Vue {
 }
 .items .item.focused span {
   display: block;
+}
+ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  margin-bottom: 2rem;
 }
 </style>
