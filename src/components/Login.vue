@@ -9,32 +9,27 @@
   </div>
 </template>
 
-<script>
-export default {
-  name: "login",
-  props: {
-    login: { type: Function, required: true }
-  },
-  data() {
-    return {
-      email: null,
-      password: null
-    };
-  },
-  methods: {
-    submit() {
-      this.login(this.email, this.password);
-    }
-  },
-  computed: {
-    valid() {
-      return !!this.email && !!this.password;
-    }
+<script lang="ts">
+import { Component, Prop, Vue } from 'vue-property-decorator';
+
+@Component
+export default class Item extends Vue {
+  @Prop({ required: true }) private login!: Function;
+
+  email: string | null = null;
+  password: string | null = null;
+
+  get valid() {
+    return !!this.email && !!this.password;
   }
-};
+
+  submit() {
+    this.login(this.email, this.password);
+  }
+}
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 h1 {
   font-size: 4rem;
 }

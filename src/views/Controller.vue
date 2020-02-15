@@ -3,12 +3,18 @@
     <div v-for="activity in activities" :key="activity.label">
       <h3>
         {{ activity.icon }} {{ activity.label }}
-        <router-link class="link" :to="`/data/${activity.type}/${activity.store}`">Data</router-link>
+        <router-link
+          class="link"
+          :to="`/data/${activity.type}/${activity.store}`"
+          >Data</router-link
+        >
       </h3>
       <button
         v-if="activity.type === 'instance'"
         @click="() => addInstance(activity)"
-      >{{ activity.icon }}</button>
+      >
+        {{ activity.icon }}
+      </button>
       <div v-else>
         <Item
           v-for="item in activity.items"
@@ -16,49 +22,49 @@
           :type="item.type"
           :id="item.id"
           :initial="item.initial"
-          :handler="(value) => addItem(activity, item, value)"
+          :handler="value => addItem(activity, item, value)"
         />
       </div>
     </div>
   </section>
 </template>
 
-<script>
-import Firebase from "@/classes/Firebase";
-import Item from "@/components/Item";
-import Time from "@/classes/Time";
-import activities from "@/constants/activities";
+<script lang="ts">
+import Firebase, { FirebaseValue } from '@/classes/Firebase';
+import Item from '@/components/Item.vue';
+import Time from '@/classes/Time';
+import activities, { Activity, ActivityItem } from '@/constants/activities';
+import { MultipleValue } from '@/components/DataMultiple.vue';
+import { InstanceValue } from '@/components/DataInstance.vue';
 
-export default {
-  name: "controller",
-  props: {
-    workout: { type: Array, required: true },
-    poops: { type: Array, required: true }
-  },
-  components: { Item },
-  data() {
-    return {
-      activities,
-      customPoop: new Date().toLocaleString(),
-      firebase: new Firebase()
-    };
-  },
-  computed: {},
-  methods: {
-    addInstance({ label, store }) {
-      if (window.confirm(`Please confirm the ${label}`))
-        this.firebase.push(store, Time.now());
-    },
-    addItem({ label: mainLabel, store }, { type, id }, value) {
-      const v = [Time.now(), value, type, id];
-      if (window.confirm(`Please confirm ${value} ${type} ${mainLabel} ${id}`))
-        this.firebase.push(store, v);
-    }
+import { Component, Prop, Vue } from 'vue-property-decorator';
+
+@Component({ components: { Item } })
+export default class Controller extends Vue {
+  @Prop({ required: true }) private workout!: Array<MultipleValue>;
+  @Prop({ required: true }) private poops!: Array<InstanceValue>;
+
+  activities: Array<Activity> = activities;
+  firebase: Firebase = new Firebase();
+
+  addInstance({ label, store }: Activity): void {
+    if (window.confirm(`Please confirm the ${label}`))
+      this.firebase.push(store, Time.now());
   }
-};
+
+  addItem(
+    { label: mainLabel, store }: Activity,
+    { type, id }: ActivityItem,
+    value: FirebaseValue
+  ): void {
+    const v = [Time.now(), value, type, id];
+    if (window.confirm(`Please confirm ${value} ${type} ${mainLabel} ${id}`))
+      this.firebase.push(store, v);
+  }
+}
 </script>
 
-<style lang="scss" scoped>
+<style scoped>
 button {
   font-size: 5rem;
   appearance: none;

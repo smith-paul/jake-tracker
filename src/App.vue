@@ -1,83 +1,97 @@
 <template>
   <div id="app">
-    <router-view v-if="authenticated" :poops="formattedPoops" :workout="formattedWorkout" />
+    <router-view
+      v-if="authenticated"
+      :poops="formattedPoops"
+      :workout="formattedWorkout"
+    />
     <Login :login="authenticate" v-else />
   </div>
 </template>
 
-<script>
-import Firebase from "@/classes/Firebase";
-import Time from "@/classes/Time";
-import Login from "@/components/Login";
+<script lang="ts">
+import { Component, Vue } from 'vue-property-decorator';
+import Firebase, { FirebaseValue } from '@/classes/Firebase';
+import Time from '@/classes/Time';
+import Login from '@/components/Login.vue';
+import { MultipleValue } from '@/components/DataMultiple.vue';
+import { InstanceValue } from '@/components/DataInstance.vue';
+import { ActivityItem } from '@/constants/activities';
 
-export default {
-  data() {
-    return {
-      authenticated: false,
-      firebase: new Firebase(),
-      workout: [],
-      poops: []
-    };
-  },
-  computed: {
-    formattedPoops() {
-      return Array.from(this.poops)
-        .sort()
-        .reverse()
-        .map(epoch => new Time(epoch));
-    },
-    formattedWorkout() {
-      return Array.from(this.workout)
-        .sort()
-        .reverse()
-        .map(([epoch, value, type, id]) => ({
-          value,
-          type,
-          id,
-          time: new Time(epoch)
-        }));
-    }
-  },
-  methods: {
-    authenticate(email, password) {
-      this.firebase
-        .authenticate(email, password)
-        .catch(this.handleUnauthenticated);
-    },
-    handleUnauthenticated() {
-      this.authenticated = false;
-    },
-    initialize() {
-      this.firebase.initialize(data => {
-        // We're waiting for signed in. This is called multiple times.
-        if (data) {
-          this.email = data.email;
-          this.id = data.uid;
-          this.authenticated = true;
-          this.initializeData();
-        } else this.authenticated = false;
-      });
-    },
-    initializeData() {
-      this.firebase.subscribe("poops", {
-        added: (k, v) => this.onAdd("poops", k, v)
-      });
-      this.firebase.subscribe("workout", {
-        added: (k, v) => this.onAdd("workout", k, v)
-      });
-    },
-    onAdd(type, key, value) {
-      this[type].push(value);
-    }
-  },
-  components: { Login },
+type Store = 'workout' | 'poops';
+interface FormattedMultiple {
+  value: FirebaseValue;
+  type: ActivityItem['type'];
+  id: ActivityItem['id'];
+  time: Time;
+}
+type FormattedInstance = Time;
+
+@Component({ components: { Login } })
+export default class App extends Vue {
+  authenticated = false;
+  email?: string;
+  firebase: Firebase = new Firebase();
+  id?: string;
+  workout: Array<MultipleValue> = [];
+  poops: Array<InstanceValue> = [];
+
+  get formattedPoops(): Array<FormattedInstance> {
+    return Array.from(this.poops)
+      .sort()
+      .reverse()
+      .map(epoch => new Time(epoch) as FormattedInstance);
+  }
+  get formattedWorkout(): Array<FormattedMultiple> {
+    return Array.from(this.workout)
+      .sort()
+      .reverse()
+      .map(
+        ([epoch, value, type, id]: MultipleValue) =>
+          ({
+            value,
+            type,
+            id,
+            time: new Time(epoch as number),
+          } as FormattedMultiple)
+      );
+  }
+
+  authenticate(email: string, password: string) {
+    this.firebase
+      .authenticate(email, password)
+      .catch(this.handleUnauthenticated);
+  }
+  handleUnauthenticated() {
+    this.authenticated = false;
+  }
+  initialize() {
+    this.firebase.initialize((data: { email: string; uid: string }) => {
+      // We're waiting for signed in. This is called multiple times.
+      if (data) {
+        this.email = data.email;
+        this.id = data.uid;
+        this.authenticated = true;
+        this.initializeData();
+      } else this.authenticated = false;
+    });
+  }
+  initializeData() {
+    this.firebase.subscribe('poops', {
+      added: (k: string, v: InstanceValue) => this.poops.push(v),
+    });
+    this.firebase.subscribe('workout', {
+      added: (k: string, v: MultipleValue) => this.workout.push(v),
+    });
+  }
+
   mounted() {
     this.initialize();
   }
-};
+}
 </script>
 
-<style lang="scss">
+<style>
 html,
 body {
   margin: 0;
