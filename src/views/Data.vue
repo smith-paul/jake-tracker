@@ -18,15 +18,20 @@
 import DataInstance from '@/components/DataInstance.vue';
 import DataMultiple from '@/components/DataMultiple.vue';
 import activities, { Activity } from '@/constants/activities';
-import { MultipleValue } from '@/components/DataMultiple.vue';
-import { InstanceValue } from '@/components/DataInstance.vue';
-
+import {
+  FormatStoreInstance,
+  FormatStoreMultiple,
+  FormattedInstance,
+  FormattedMultiple,
+  StoreInstance,
+  StoreMultiple,
+} from '@/App.vue';
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({ components: { DataInstance, DataMultiple } })
 export default class Controller extends Vue {
-  @Prop({ required: true }) private workout!: Array<MultipleValue>;
-  @Prop({ required: true }) private poops!: Array<InstanceValue>;
+  @Prop({ required: true }) private instances!: FormatStoreInstance;
+  @Prop({ required: true }) private multiples!: FormatStoreMultiple;
 
   activities: Array<Activity> = activities;
 
@@ -37,15 +42,15 @@ export default class Controller extends Vue {
     return this.$route.params.type;
   }
 
-  get instance() {
+  get instance(): Array<FormattedInstance> {
     if (this.type !== 'instance') return [];
-    if (this.store === 'poops') return this.poops;
-    return [];
+    const instance = this.instances[this.store as StoreInstance];
+    return instance || [];
   }
-  get multiple() {
+  get multiple(): Array<FormattedMultiple> {
     if (this.type !== 'multiple') return [];
-    if (this.store === 'workout') return this.workout;
-    return [];
+    const multiple = this.multiples[this.store as StoreMultiple];
+    return multiple || [];
   }
 }
 </script>

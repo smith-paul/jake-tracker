@@ -111,13 +111,14 @@ export default class DataInstance extends Vue {
 }
 .items .item {
   position: absolute;
-  font-size: 0.8rem;
+  font-size: 1.2rem;
   transform: translate(-50%, -50%) translateZ(0);
 }
 .items .item span {
   position: absolute;
   left: 50%;
   top: 100%;
+  font-size: 0.8rem;
   transform: translateX(-50%);
   color: white;
   display: none;

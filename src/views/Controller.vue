@@ -34,15 +34,14 @@ import Firebase, { FirebaseValue } from '@/classes/Firebase';
 import Item from '@/components/Item.vue';
 import Time from '@/classes/Time';
 import activities, { Activity, ActivityItem } from '@/constants/activities';
-import { MultipleValue } from '@/components/DataMultiple.vue';
-import { InstanceValue } from '@/components/DataInstance.vue';
+import { FormatStoreInstance, FormatStoreMultiple } from '@/App.vue';
 
 import { Component, Prop, Vue } from 'vue-property-decorator';
 
 @Component({ components: { Item } })
 export default class Controller extends Vue {
-  @Prop({ required: true }) private workout!: Array<MultipleValue>;
-  @Prop({ required: true }) private poops!: Array<InstanceValue>;
+  @Prop({ required: true }) private instances!: FormatStoreInstance;
+  @Prop({ required: true }) private multiples!: FormatStoreMultiple;
 
   activities: Array<Activity> = activities;
   firebase: Firebase = new Firebase();

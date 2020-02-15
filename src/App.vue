@@ -2,8 +2,8 @@
   <div id="app">
     <router-view
       v-if="authenticated"
-      :poops="formattedPoops"
-      :workout="formattedWorkout"
+      :instances="formattedInstances"
+      :multiples="formattedMultiples"
     />
     <Login :login="authenticate" v-else />
   </div>
@@ -18,14 +18,28 @@ import { MultipleValue } from '@/components/DataMultiple.vue';
 import { InstanceValue } from '@/components/DataInstance.vue';
 import { ActivityItem } from '@/constants/activities';
 
-type Store = 'workout' | 'poops';
-interface FormattedMultiple {
+export interface FormattedMultiple {
   value: FirebaseValue;
   type: ActivityItem['type'];
   id: ActivityItem['id'];
   time: Time;
 }
-type FormattedInstance = Time;
+export type FormattedInstance = Time;
+
+export type StoreInstance = 'poops';
+export type StoreMultiple = 'workout';
+
+const storeInstances: Array<StoreInstance> = ['poops'];
+const storeMultiples: Array<StoreMultiple> = ['workout'];
+
+export type FormatStoreInstance = {
+  [K in StoreInstance]?: Array<FormattedInstance>;
+};
+export type FormatStoreMultiple = {
+  [K in StoreMultiple]?: Array<FormattedMultiple>;
+};
+type StoresInstance = { [K in StoreInstance]?: Array<InstanceValue> };
+type StoresMultiple = { [K in StoreMultiple]?: Array<MultipleValue> };
 
 @Component({ components: { Login } })
 export default class App extends Vue {
@@ -33,28 +47,62 @@ export default class App extends Vue {
   email?: string;
   firebase: Firebase = new Firebase();
   id?: string;
-  workout: Array<MultipleValue> = [];
-  poops: Array<InstanceValue> = [];
+  storesInstance: StoresInstance = {};
+  storesMultiple: StoresMultiple = {};
 
-  get formattedPoops(): Array<FormattedInstance> {
-    return Array.from(this.poops)
-      .sort()
-      .reverse()
-      .map(epoch => new Time(epoch) as FormattedInstance);
+  constructor() {
+    super();
+    storeInstances.forEach(
+      (instance: StoreInstance) => (this.storesInstance[instance] = [])
+    );
+    storeMultiples.forEach(
+      (multiple: StoreMultiple) => (this.storesMultiple[multiple] = [])
+    );
   }
-  get formattedWorkout(): Array<FormattedMultiple> {
-    return Array.from(this.workout)
-      .sort()
-      .reverse()
-      .map(
-        ([epoch, value, type, id]: MultipleValue) =>
-          ({
-            value,
-            type,
-            id,
-            time: new Time(epoch as number),
-          } as FormattedMultiple)
-      );
+
+  get formattedInstances(): FormatStoreInstance {
+    const res: FormatStoreInstance = {};
+    for (const k in this.storesInstance) {
+      res[k as StoreInstance] = Array.from(
+        this.storesInstance[k as StoreInstance] || []
+      )
+        .sort()
+        .reverse()
+        .map(instance => this.formatInstance(instance));
+    }
+    return res;
+  }
+  get formattedMultiples(): FormatStoreMultiple {
+    const res: FormatStoreMultiple = {};
+    for (const k in this.storesMultiple) {
+      res[k as StoreMultiple] = Array.from(
+        this.storesMultiple[k as StoreMultiple] || []
+      )
+        .sort()
+        .reverse()
+        .map(([a, b, c, d]) =>
+          this.formatMultiple(
+            a as number,
+            b as FirebaseValue,
+            c as ActivityItem['type'],
+            d as ActivityItem['id']
+          )
+        );
+    }
+    return res;
+  }
+
+  formatInstance(epoch: number) {
+    return new Time(epoch as number) as FormattedInstance;
+  }
+
+  formatMultiple(
+    epoch: number,
+    value: FirebaseValue,
+    type: ActivityItem['type'],
+    id: ActivityItem['id']
+  ) {
+    return { time: new Time(epoch), value, type, id } as FormattedMultiple;
   }
 
   authenticate(email: string, password: string) {
@@ -77,11 +125,17 @@ export default class App extends Vue {
     });
   }
   initializeData() {
-    this.firebase.subscribe('poops', {
-      added: (k: string, v: InstanceValue) => this.poops.push(v),
+    storeInstances.forEach(instance => {
+      this.firebase.subscribe(instance, {
+        added: (k: string, v: InstanceValue) =>
+          this.storesInstance[instance]?.push(v),
+      });
     });
-    this.firebase.subscribe('workout', {
-      added: (k: string, v: MultipleValue) => this.workout.push(v),
+    storeMultiples.forEach(multiple => {
+      this.firebase.subscribe(multiple, {
+        added: (k: string, v: MultipleValue) =>
+          this.storesMultiple[multiple]?.push(v),
+      });
     });
   }
 
