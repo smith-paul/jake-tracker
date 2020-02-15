@@ -45,29 +45,31 @@
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
 import Time from '@/classes/Time';
+import { FormattedInstance } from '@/App.vue';
 
 interface Marker {
   left: string;
   label: string;
 }
-type Item = Time;
 
 export type InstanceValue = number;
 
 @Component
 export default class DataInstance extends Vue {
   @Prop() private icon!: string;
-  @Prop({ required: true }) private items!: Array<Item>;
+  @Prop({ required: true }) private items!: Array<FormattedInstance>;
 
   active: null | number = null;
   markers: Array<Marker> = this.buildMarkers();
 
   get sortedByTime() {
-    return Array.from(this.items).sort((a: Item, b: Item) => {
-      if (a.time > b.time) return 1;
-      if (a.time < b.time) return -1;
-      return 0;
-    });
+    return Array.from(this.items).sort(
+      (a: FormattedInstance, b: FormattedInstance) => {
+        if (a.time > b.time) return 1;
+        if (a.time < b.time) return -1;
+        return 0;
+      }
+    );
   }
 
   get stats() {
