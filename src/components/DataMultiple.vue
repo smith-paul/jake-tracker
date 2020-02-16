@@ -26,25 +26,27 @@ export default class DataMultiple extends Vue {
   @Prop({ required: true }) private items!: Array<FormattedMultiple>;
 
   get groups() {
-    const groups: { [k: string]: [] } = {};
+    const groups: { [k: string]: Array<FormattedMultiple> } = {};
+    const res: { [k: string]: {} } = {};
     this.sortedByTime.forEach(({ type, value, id, time }) => {
       if (!groups[id]) groups[id] = [];
       groups[id].push({ type, value, id, time });
     });
     for (const k in groups) {
       const stats = { week: 0, month: 0, year: 0 };
-      stats.week = groups[k]
+      const shallow = Array.from(groups[k]);
+      stats.week = shallow
         .filter(v => v.time.ago.weeks === 0)
-        .reduce((a, b) => a + b.value, 0);
-      stats.month = groups[k]
+        .reduce((a, b) => a + (b.value as number), 0);
+      stats.month = shallow
         .filter(v => v.time.ago.months === 0)
-        .reduce((a, b) => a + b.value, 0);
-      stats.year = groups[k]
+        .reduce((a, b) => a + (b.value as number), 0);
+      stats.year = shallow
         .filter(v => v.time.ago.years === 0)
-        .reduce((a, b) => a + b.value, 0);
-      groups[k] = stats;
+        .reduce((a, b) => a + (b.value as number), 0);
+      res[k] = stats;
     }
-    return groups;
+    return res;
   }
 
   get sortedByTime() {
