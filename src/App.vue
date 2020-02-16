@@ -171,6 +171,8 @@ section {
 a {
   text-decoration: none;
   color: #ffbb00;
+  text-transform: uppercase;
+  font-weight: bold;
 }
 *:focus {
   outline: 2px solid #ffbb00;

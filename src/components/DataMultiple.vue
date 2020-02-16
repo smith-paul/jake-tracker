@@ -3,8 +3,9 @@
     {{ icon }}
     <div class="items">
       <p v-for="(group, k) in groups" :key="k">
-        {{ k }}: this week {{ group.week }} this month {{ group.month }} this
-        year {{ group.year }}
+        <strong>{{ k }}</strong
+        ><br />
+        {{ group.week }} wk, {{ group.month }} mo, {{ group.year }} yr
       </p>
     </div>
   </div>
