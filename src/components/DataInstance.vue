@@ -65,8 +65,8 @@ export default class DataInstance extends Vue {
   get sortedByTime() {
     return Array.from(this.items).sort(
       (a: FormattedInstance, b: FormattedInstance) => {
-        if (a.time > b.time) return 1;
-        if (a.time < b.time) return -1;
+        if (a.epoch > b.epoch) return -1;
+        if (a.epoch < b.epoch) return 1;
         return 0;
       }
     );
