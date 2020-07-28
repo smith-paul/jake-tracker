@@ -1,29 +1,13 @@
 <template>
   <div class="main">
-    <div class="chart">
-      <div class="markers">
-        <span
-          v-for="m in markers"
-          :key="m.label"
-          :style="{ left: m.left }"
-          class="x"
-        >
-          <span>{{ m.label }}</span>
-        </span>
-      </div>
-      <div class="items">
-        <span
-          v-for="item in sortedByTime"
-          :key="item.epoch"
-          :style="itemStyle(item)"
-          :class="{ focused: active === item.epoch }"
-          @click="activate(item.epoch)"
-          class="item"
-        >
-          {{ icon }}
-          <span>{{ item.time }}</span>
-        </span>
-      </div>
+    <div class="charts">
+      <DataInfo :group="groups.hours" :keys="groupsKeys.hours" type="hours" />
+      <DataInfo :group="groups.weeks" :keys="groupsKeys.weeks" type="weeks" />
+      <DataInfo
+        :group="groups.months"
+        :keys="groupsKeys.months"
+        type="months"
+      />
     </div>
     <div class="stats" v-if="stats.first">
       <ul>
@@ -44,6 +28,7 @@
 
 <script lang="ts">
 import { Component, Prop, Vue } from 'vue-property-decorator';
+import DataInfo from '@/components/DataInfo.vue';
 import Time from '@/classes/Time';
 import { FormattedInstance } from '@/App.vue';
 
@@ -52,15 +37,22 @@ interface Marker {
   label: string;
 }
 
+export interface Group {
+  [k: string]: {
+    count: number;
+    value: number;
+    year?: number;
+  };
+}
+
 export type InstanceValue = number;
 
-@Component
+@Component({ components: { DataInfo } })
 export default class DataInstance extends Vue {
   @Prop() private icon!: string;
   @Prop({ required: true }) private items!: Array<FormattedInstance>;
 
   active: null | number = null;
-  markers: Array<Marker> = this.buildMarkers();
 
   get sortedByTime() {
     return Array.from(this.items).sort(
@@ -81,17 +73,37 @@ export default class DataInstance extends Vue {
     };
   }
 
+  get groupsKeys() {
+    const clone: { [k: string]: string[] | Group } = { ...this.groups };
+    for (const key in clone) {
+      clone[key] = Object.keys(clone[key]).sort();
+    }
+    return clone;
+  }
+
+  get groups() {
+    const weeks: Group = {};
+    const months: Group = {};
+    const hours: Group = {};
+    this.sortedByTime.forEach(({ info }) => {
+      const weekId = `${info.year}-${info.week.toString().padStart(2, '0')}`;
+      const monthId = `${info.year}-${info.month.toString().padStart(2, '0')}`;
+      const hourId = info.hour.toString().padStart(2, '0');
+      if (!weeks[weekId])
+        weeks[weekId] = { count: 0, value: info.week, year: info.year };
+      weeks[weekId].count++;
+      if (!months[monthId])
+        months[monthId] = { count: 0, value: info.month, year: info.year };
+      months[monthId].count++;
+      if (!hours[hourId]) hours[hourId] = { count: 0, value: info.hour };
+      hours[hourId].count++;
+    });
+    return { hours, weeks, months };
+  }
+
   activate(epoch: number) {
     if (this.active === epoch) this.active = null;
     else this.active = epoch;
-  }
-  buildMarkers() {
-    const x = [];
-    for (let i = 0; i < 7; i++) {
-      const label = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][i];
-      x.push({ left: `${(i / 7) * 100}%`, label });
-    }
-    return x;
   }
   itemStyle({ dayPosition, weekPosition }: Time) {
     const top = `${(1 - dayPosition) * 100}%`;
@@ -112,49 +124,14 @@ export default class DataInstance extends Vue {
   position: relative;
   margin-bottom: 2rem;
 }
-.markers,
-.items {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+
+.charts > * + * {
+  margin-top: 2rem;
 }
-.markers .x {
-  position: absolute;
-  font-size: 0.7rem;
-  color: rgba(255, 255, 255, 0.2);
-  bottom: 0;
-  top: 0;
-  display: flex;
-  flex-direction: column;
-  align-content: flex-end;
-  justify-content: flex-end;
-  width: 14.2857143%;
+.stats {
+  margin-top: auto;
 }
-.markers .x:nth-child(even) {
-  background: rgba(255, 255, 255, 0.0125);
-}
-.markers .x:nth-child(odd) {
-  background: rgba(255, 255, 255, 0.025);
-}
-.items .item {
-  position: absolute;
-  font-size: 1.2rem;
-  transform: translate(-50%, -50%) translateZ(0);
-}
-.items .item span {
-  position: absolute;
-  left: 50%;
-  top: 100%;
-  font-size: 0.8rem;
-  transform: translateX(-50%);
-  color: white;
-  display: none;
-}
-.items .item.focused span {
-  display: block;
-}
+
 ul {
   list-style: none;
   margin: 0;

@@ -8,11 +8,30 @@ type AgoInterval =
   | 'years';
 type Ago = { [K in AgoInterval]: number };
 
+type InfoType = 'year' | 'month' | 'week' | 'day' | 'hour';
+type Info = { [K in InfoType]: number };
+
+function isLeapYear(date: Date) {
+  const year = date.getFullYear();
+  if ((year & 3) !== 0) return false;
+  return year % 100 !== 0 || year % 400 === 0;
+}
+
+function getDOY(date: Date) {
+  const dayCount = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
+  const mn = date.getMonth();
+  const dn = date.getDate();
+  let dayOfYear = dayCount[mn] + dn;
+  if (mn > 1 && isLeapYear(date)) dayOfYear++;
+  return dayOfYear;
+}
+
 export default class Time {
   epoch: number;
   date: string;
   time: string;
   ago: Ago;
+  info: Info;
   weekPosition: number;
   dayPosition: number;
 
@@ -47,6 +66,14 @@ export default class Time {
       D.getHours() / 24 +
       D.getMinutes() / 60 / 24 +
       D.getSeconds() / 60 / 60 / 24;
+    const day = getDOY(D);
+    this.info = {
+      year: D.getFullYear(),
+      month: D.getMonth() + 1,
+      week: Math.floor(day / 7),
+      day,
+      hour: D.getHours(),
+    };
   }
 
   agoInWords() {
